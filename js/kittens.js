@@ -198,8 +198,15 @@ class Engine {
     }
 
     isPlayerDead() {
-        // TODO: fix this function!
-        return false;
+       // TODO: fix this function!
+       //Checks if the player is overlaping an enemy and ends game if they are
+       var column = this.player.x/PLAYER_WIDTH;
+       if((this.enemies[column]) && ((this.player.y + PLAYER_HEIGHT) <= (this.enemies[column].y + ENEMY_HEIGHT))){
+           return true;
+       } else {
+           return false;
+       }
+        
     }
 }
 
