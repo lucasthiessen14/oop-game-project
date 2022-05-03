@@ -11,7 +11,8 @@ var PLAYER_HEIGHT = 54;
 
 var High_Score = 0;
 var Start_game = 0;
-var lives = 0;
+var lives = 3;
+var game_over = 0;
 
 // These two constants keep us from using "magic numbers" in our code
 var LEFT_ARROW_CODE = 37;
@@ -159,11 +160,18 @@ class Engine {
                 this.player.move(MOVE_DOWN);
             }
             else if (e.keyCode === ENTER_CODE){
+                if(game_over){
+                    lives = 3;
+                }
                 Start_game = 1;
                 this.score = 0;
                 this.player.x = 6 * PLAYER_WIDTH;
                 this.player.y = GAME_HEIGHT - PLAYER_HEIGHT - 10;
-                this.gameLoop();
+                if(game_over === 1 || Start_game === 0){
+                    this.gameLoop();
+                }
+                game_over = 0;
+                
             }
         });
 
@@ -215,10 +223,12 @@ class Engine {
             }
         });
         this.setupEnemies();
+        
 
         // Check if player is dead
         if ((Start_game != 0) && (this.isPlayerDead())) {
             // If they are dead, then it's game over!
+            game_over = 1;
             this.ctx.drawImage(images['stars.png'], 0, 0);
             this.ctx.font = 'bold 50px Impact';
             this.ctx.fillStyle = '#ffffff';
@@ -243,6 +253,7 @@ class Engine {
                     High_Score = this.score;
                 }
                 this.ctx.fillText('High Score: ' + High_Score, 5, 60);
+                this.ctx.fillText('Lives Remaining: ' + lives, 740, 30);
             } else {
                 this.ctx.fillText('Press Enter To Begin', 375, 350);
                 this.ctx.font = 'bold 50px Impact';
@@ -262,7 +273,15 @@ class Engine {
        //Checks if the player is overlaping an enemy and ends game if they are
        var column = this.player.x/PLAYER_WIDTH;
        if((this.enemies[column]) && ((this.player.y + PLAYER_HEIGHT) <= (this.enemies[column].y + ENEMY_HEIGHT)) && (this.player.y >= this.enemies[column].y)){
-           return true;
+           delete this.enemies[column];
+           lives = lives - 1;
+           if(lives <= 0){
+            return true;
+           }
+           else {
+            return false;
+           }
+           
        } else {
            return false;
        }
