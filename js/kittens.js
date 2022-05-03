@@ -14,6 +14,7 @@ var Start_game = 0;
 var lives = 3;
 var game_over = 0;
 var level = 1;
+var Spots = GAME_WIDTH / ENEMY_WIDTH;
 
 // These two constants keep us from using "magic numbers" in our code
 var LEFT_ARROW_CODE = 37;
@@ -30,7 +31,7 @@ var MOVE_DOWN = 'down';
 
 // Preload game images
 var images = {};
-['enemy.png','stars.png', 'player.png'].forEach(imgName => {
+['enemy.png','heart1.png','stars.png', 'player.png'].forEach(imgName => {
     var img = document.createElement('img');
     img.src = 'images/' + imgName;
     images[imgName] = img;
@@ -131,12 +132,11 @@ class Engine {
 
     // This method finds a random spot where there is no enemy, and puts one in there
     addEnemy() {
-        var enemySpots = GAME_WIDTH / ENEMY_WIDTH;
 
         var enemySpot;
         // Keep looping until we find a free enemy spot at random
         while (!(enemySpot+1) || this.enemies[enemySpot]) {
-            enemySpot = Math.floor(Math.random() * enemySpots);
+            enemySpot = Math.floor(Math.random() * Spots);
         }
 
         this.enemies[enemySpot] = new Enemy(enemySpot * ENEMY_WIDTH);
