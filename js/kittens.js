@@ -4,7 +4,7 @@ var GAME_HEIGHT = 554;
 
 var ENEMY_WIDTH = 75;
 var ENEMY_HEIGHT = 156;
-var MAX_ENEMIES = 10;
+var MAX_ENEMIES = 8;
 
 var PLAYER_WIDTH = 75;
 var PLAYER_HEIGHT = 54;
@@ -13,6 +13,7 @@ var High_Score = 0;
 var Start_game = 0;
 var lives = 3;
 var game_over = 0;
+var level = 1;
 
 // These two constants keep us from using "magic numbers" in our code
 var LEFT_ARROW_CODE = 37;
@@ -29,7 +30,7 @@ var MOVE_DOWN = 'down';
 
 // Preload game images
 var images = {};
-['enemy.png', 'stars.png', 'player.png'].forEach(imgName => {
+['enemy.png','stars.png', 'player.png'].forEach(imgName => {
     var img = document.createElement('img');
     img.src = 'images/' + imgName;
     images[imgName] = img;
@@ -58,6 +59,7 @@ class Enemy extends Entity{
         this.y = this.y + timeDiff * this.speed;
     }
 }
+
 
 class Player extends Entity{
     constructor() {
@@ -167,6 +169,8 @@ class Engine {
                 this.score = 0;
                 this.player.x = 6 * PLAYER_WIDTH;
                 this.player.y = GAME_HEIGHT - PLAYER_HEIGHT - 10;
+                MAX_ENEMIES = 8;
+                level = 1;
                 if(game_over === 1 || Start_game === 0){
                     this.gameLoop();
                 }
@@ -189,17 +193,13 @@ class Engine {
     You should use this parameter to scale your update appropriately
      */
 
-    startLoop() {
-        this.ctx.drawImage(images['stars.png'], 0, 0);
-    }
-
     gameLoop() {
         // Check how long it's been since last frame
         var currentFrame = Date.now();
         var timeDiff = currentFrame - this.lastFrame;
 
         // Increase the score!
-        if(Start_game != 0){
+        if(Start_game != 0 || game_over != 1){
             this.score += timeDiff;
 
             // Call update on all enemies
@@ -211,7 +211,7 @@ class Engine {
         // Draw everything!
         this.ctx.drawImage(images['stars.png'], 0, 0); // draw the star bg
         
-        if(Start_game != 0){
+        if(Start_game != 0 || game_over != 1){
             this.enemies.forEach(enemy => enemy.render(this.ctx)); // draw the enemies
             this.player.render(this.ctx); // draw the player
         }
@@ -242,6 +242,8 @@ class Engine {
             this.ctx.fillText('High Score: ' + High_Score, 370, 300)
             this.ctx.font = 'bold 30px Impact';
             this.ctx.fillText('Press enter to play again', 370, 350);
+            this.ctx.drawImage(images['Explosion.gif'], 0, 0);
+            
         }
         else{
             // If player is not dead, then draw the score
@@ -249,16 +251,37 @@ class Engine {
             this.ctx.fillStyle = '#ffffff';
             if(Start_game != 0){
                 this.ctx.fillText('Score: ' + this.score, 5, 30);
+                if(this.score > 50000){
+                    MAX_ENEMIES = 13;
+                    level = 6;
+                }
+                else if(this.score > 40000){
+                    MAX_ENEMIES = 12;
+                    level = 5;
+                }
+                else if(this.score > 30000){
+                    MAX_ENEMIES = 11;
+                    level = 4;
+                }
+                else if(this.score > 20000){
+                    MAX_ENEMIES = 10;
+                    level = 3;
+                }
+                else if(this.score > 10000){
+                    MAX_ENEMIES = 9
+                    level = 2;
+                }
+                
                 if(High_Score < this.score){
                     High_Score = this.score;
                 }
                 this.ctx.fillText('High Score: ' + High_Score, 5, 60);
+                this.ctx.fillText('Level: ' + level, 5, 90);
                 this.ctx.fillText('Lives Remaining: ' + lives, 740, 30);
             } else {
-                this.ctx.fillText('Press Enter To Begin', 375, 350);
+                this.ctx.fillText('Press Enter To Begin', 375, 300);
                 this.ctx.font = 'bold 50px Impact';
                 this.ctx.fillText('Exploding Kittens', 320, 250);
-                this.ctx.fillText('High Score: ' + High_Score, 320, 300);
 
             }
 
