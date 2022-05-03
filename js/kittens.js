@@ -1,21 +1,30 @@
 // This section contains some game constants
-var GAME_WIDTH = 375;
-var GAME_HEIGHT = 500;
+var GAME_WIDTH = 975;
+var GAME_HEIGHT = 554;
 
 var ENEMY_WIDTH = 75;
 var ENEMY_HEIGHT = 156;
-var MAX_ENEMIES = 3;
+var MAX_ENEMIES = 10;
 
 var PLAYER_WIDTH = 75;
 var PLAYER_HEIGHT = 54;
 
+var High_Score = 0;
+var Start_game = 0;
+var lives = 0;
+
 // These two constants keep us from using "magic numbers" in our code
 var LEFT_ARROW_CODE = 37;
 var RIGHT_ARROW_CODE = 39;
+var UP_ARROW_CODE = 38;
+var DOWN_ARROW_CODE = 40;
+var ENTER_CODE = 13;
 
 // These two constants allow us to DRY
 var MOVE_LEFT = 'left';
 var MOVE_RIGHT = 'right';
+var MOVE_UP = 'up';
+var MOVE_DOWN = 'down';
 
 // Preload game images
 var images = {};
@@ -52,7 +61,7 @@ class Enemy extends Entity{
 class Player extends Entity{
     constructor() {
         super();
-        this.x = 2 * PLAYER_WIDTH;
+        this.x = 6 * PLAYER_WIDTH;
         this.y = GAME_HEIGHT - PLAYER_HEIGHT - 10;
         this.sprite = images['player.png'];
     }
@@ -64,6 +73,12 @@ class Player extends Entity{
         }
         else if (direction === MOVE_RIGHT && this.x < GAME_WIDTH - PLAYER_WIDTH) {
             this.x = this.x + PLAYER_WIDTH;
+        }
+        else if (direction === MOVE_UP && this.y > PLAYER_HEIGHT) {
+            this.y = this.y - PLAYER_HEIGHT;
+        }
+        else if (direction === MOVE_DOWN && this.y < GAME_HEIGHT - 2*PLAYER_HEIGHT) {
+            this.y = this.y + PLAYER_HEIGHT;
         }
     }  
 }
@@ -137,6 +152,19 @@ class Engine {
             else if (e.keyCode === RIGHT_ARROW_CODE) {
                 this.player.move(MOVE_RIGHT);
             }
+            else if (e.keyCode === UP_ARROW_CODE) {
+                this.player.move(MOVE_UP);
+            }
+            else if (e.keyCode === DOWN_ARROW_CODE) {
+                this.player.move(MOVE_DOWN);
+            }
+            else if (e.keyCode === ENTER_CODE){
+                Start_game = 1;
+                this.score = 0;
+                this.player.x = 6 * PLAYER_WIDTH;
+                this.player.y = GAME_HEIGHT - PLAYER_HEIGHT - 10;
+                this.gameLoop();
+            }
         });
 
         this.gameLoop();
@@ -152,21 +180,33 @@ class Engine {
     To account for the fact that we don't always have 60 frames per second, gameLoop will send a time delta argument to `update`
     You should use this parameter to scale your update appropriately
      */
+
+    startLoop() {
+        this.ctx.drawImage(images['stars.png'], 0, 0);
+    }
+
     gameLoop() {
         // Check how long it's been since last frame
         var currentFrame = Date.now();
         var timeDiff = currentFrame - this.lastFrame;
 
         // Increase the score!
-        this.score += timeDiff;
+        if(Start_game != 0){
+            this.score += timeDiff;
 
-        // Call update on all enemies
-        this.enemies.forEach(enemy => enemy.update(timeDiff));
+            // Call update on all enemies
+            this.enemies.forEach(enemy => enemy.update(timeDiff));
+        }
+        
+        
 
         // Draw everything!
         this.ctx.drawImage(images['stars.png'], 0, 0); // draw the star bg
-        this.enemies.forEach(enemy => enemy.render(this.ctx)); // draw the enemies
-        this.player.render(this.ctx); // draw the player
+        
+        if(Start_game != 0){
+            this.enemies.forEach(enemy => enemy.render(this.ctx)); // draw the enemies
+            this.player.render(this.ctx); // draw the player
+        }
 
         // Check if any enemies should die
         this.enemies.forEach((enemy, enemyIdx) => {
@@ -177,17 +217,39 @@ class Engine {
         this.setupEnemies();
 
         // Check if player is dead
-        if (this.isPlayerDead()) {
+        if ((Start_game != 0) && (this.isPlayerDead())) {
             // If they are dead, then it's game over!
-            this.ctx.font = 'bold 30px Impact';
+            this.ctx.drawImage(images['stars.png'], 0, 0);
+            this.ctx.font = 'bold 50px Impact';
             this.ctx.fillStyle = '#ffffff';
-            this.ctx.fillText(this.score + ' GAME OVER', 5, 30);
+            if(this.score > High_Score){
+                High_Score = this.score;
+                this.ctx.fillText('New High Score!', 370, 200);
+            } else {
+                this.ctx.fillText('Game Over', 370, 200);
+            }
+            this.ctx.fillText('Score: ' + this.score, 370, 250);
+            this.ctx.fillText('High Score: ' + High_Score, 370, 300)
+            this.ctx.font = 'bold 30px Impact';
+            this.ctx.fillText('Press enter to play again', 370, 350);
         }
-        else {
+        else{
             // If player is not dead, then draw the score
             this.ctx.font = 'bold 30px Impact';
             this.ctx.fillStyle = '#ffffff';
-            this.ctx.fillText(this.score, 5, 30);
+            if(Start_game != 0){
+                this.ctx.fillText('Score: ' + this.score, 5, 30);
+                if(High_Score < this.score){
+                    High_Score = this.score;
+                }
+                this.ctx.fillText('High Score: ' + High_Score, 5, 60);
+            } else {
+                this.ctx.fillText('Press Enter To Begin', 375, 350);
+                this.ctx.font = 'bold 50px Impact';
+                this.ctx.fillText('Exploding Kittens', 320, 250);
+                this.ctx.fillText('High Score: ' + High_Score, 320, 300);
+
+            }
 
             // Set the time marker and redraw
             this.lastFrame = Date.now();
@@ -199,7 +261,7 @@ class Engine {
        // TODO: fix this function!
        //Checks if the player is overlaping an enemy and ends game if they are
        var column = this.player.x/PLAYER_WIDTH;
-       if((this.enemies[column]) && ((this.player.y + PLAYER_HEIGHT) <= (this.enemies[column].y + ENEMY_HEIGHT))){
+       if((this.enemies[column]) && ((this.player.y + PLAYER_HEIGHT) <= (this.enemies[column].y + ENEMY_HEIGHT)) && (this.player.y >= this.enemies[column].y)){
            return true;
        } else {
            return false;
@@ -215,3 +277,4 @@ class Engine {
 // This section will start the game
 var gameEngine = new Engine(document.getElementById('app'));
 gameEngine.start();
+
